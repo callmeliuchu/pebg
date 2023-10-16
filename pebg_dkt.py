@@ -49,9 +49,9 @@ train_flag = True
 
 # build tensorflow graph 
 # tf_skill = tf.placeholder(tf.int32, [None, None], name='tf_skill')           # [bs, max_len]
-tf_y = tf.placeholder(tf.float32, [None, None], name='tf_y')
-tf_pro = tf.placeholder(tf.int32, [None, None], name='tf_pro')
-tf_real_seq_len = tf.placeholder(tf.int32, [None], name='tf_real_seq_len')   # [bs]
+tf_y = tf.compat.v1.placeholder(tf.float32, [None, None], name='tf_y')
+tf_pro = tf.compat.v1.placeholder(tf.int32, [None, None], name='tf_pro')
+tf_real_seq_len = tf.compat.v1.placeholder(tf.int32, [None], name='tf_real_seq_len')   # [bs]
 
 tf_batch_size = tf.shape(tf_y)[0]
 tf_max_len = tf.shape(tf_y)[1]
