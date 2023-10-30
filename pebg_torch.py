@@ -29,7 +29,7 @@ import torch.nn as nn
 
 
 def pnn1(inputs, embed_size, hidden_dim, keep_prob):
-    inputs = [inp.cuda() for inp in inputs]  # 把输入移动到GPU
+    # inputs = [inp.cuda() for inp in inputs]  # 把输入移动到GPU
 
     num_inputs = len(inputs)
     num_pairs = int(num_inputs * (num_inputs - 1) / 2)
