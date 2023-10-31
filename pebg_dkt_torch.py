@@ -19,7 +19,7 @@ def train_test_split(data, split=0.8):
 
 
 # 数据处理
-data_folder = "assist09"
+data_folder = "assist09_test"
 data = np.load(os.path.join(data_folder, data_folder + '.npz'))
 y, skill, problem, real_len = data['y'], data['skill'], data['problem'], data['real_len']
 skill_num, pro_num = data['skill_num'], data['problem_num']
@@ -42,7 +42,7 @@ embed_dim = pre_pro_embed.shape[1]
 hidden_dim = 128
 lr = 0.001
 use_pretrain = True
-train_embed = False
+train_embed = True
 
 
 # 模型定义
