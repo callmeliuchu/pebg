@@ -63,15 +63,8 @@ class LSTM(nn.Module):
         pro_emb = self.pro_embeddings(pro_seq)
         y_emb = y_seq.unsqueeze(-1)  # [batch, seq_len, 1]
         lstm_input = torch.cat([pro_emb, y_emb], dim=-1)
-
-        # packed_input = nn.utils.rnn.pack_padded_sequence(lstm_input, pro_len, batch_first=True,enforce_sorted=False)
         lstm_out, (hn, cn) = self.lstm(lstm_input)
-        # lstm_out, _ = nn.utils.rnn.pad_packed_sequence(packed_out, batch_first=True)
-
-        # out = torch.cat([lstm_out, pro_emb], dim=-1)
-        # out = out.view(-1, hidden_dim + embed_dim)
         pred = self.linear(lstm_out)
-
         return pred
 
 
@@ -83,8 +76,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
 
 def compute_metrics(preds, targets):
-    # preds = preds.cpu().numpy()
-    # targets = targets.cpu().numpy()
     preds[preds > 0] = 1
     preds[preds <= 0] = 0
     acc = metrics.accuracy_score(targets, preds)
@@ -128,14 +119,11 @@ if train_flag:
                 end = start + bs
                 y_batch = torch.from_numpy(test_y[start:end]).float().to(device)
                 pro_batch = torch.from_numpy(test_problem[start:end]).long().to(device)
-                len_batch = torch.from_numpy(test_real_len[start:end] - 1).long().to(device)
+                len_batch = torch.from_numpy(test_real_len[start:end]).long().to(device)
 
-                pred = model(pro_batch, y_batch, len_batch).view(-1)
-                target = y_batch.view(-1).float()
-                index = target != -1
-                pred = pred[index]
-                target = target[index]
-
+                apred = model(pro_batch, y_batch, len_batch).squeeze(-1)
+                pred = torch.cat([apred[i, :l - 1] for i, l in enumerate(len_batch)], dim=-1)
+                target = torch.cat([y_batch[i, 1:l] for i, l in enumerate(len_batch)], dim=-1)
                 test_preds.append(pred.detach().cpu().numpy())
                 test_targets.append(target.detach().cpu().numpy())
 
