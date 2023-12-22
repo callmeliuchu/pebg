@@ -41,17 +41,26 @@ bs = 128
 embed_dim = pre_pro_embed.shape[1]
 hidden_dim = 128
 lr = 0.001
-use_pretrain = True
-train_embed = True
+use_pretrain =  True
+train_embed = False
 
+
+import torch
+
+def concat_zero(x):
+    xx = x[:-1]
+    yy = x[-1]
+    zero_tensor = torch.zeros(embed_dim, dtype=torch.float32)
+    o = torch.cat([xx, zero_tensor]) if yy > 0. else torch.cat([zero_tensor, xx])
+    return o
 
 # 模型定义
 class LSTM(nn.Module):
     def __init__(self, pro_num, embed_dim, hidden_dim):
         super(LSTM, self).__init__()
         self.pro_embeddings = nn.Embedding(pro_num, embed_dim, padding_idx=0)
-        lstm_input_dim = embed_dim + 1
-        self.lstm = nn.LSTM(lstm_input_dim, hidden_dim, batch_first=True)
+        # lstm_input_dim = embed_dim + 1
+        self.lstm = nn.LSTM(embed_dim*2, hidden_dim, batch_first=True)
         self.linear = nn.Linear(hidden_dim, 1)
 
         if use_pretrain:
@@ -60,10 +69,28 @@ class LSTM(nn.Module):
             self.pro_embeddings.weight.requires_grad = train_embed
 
     def forward(self, pro_seq, y_seq, pro_len):
-        pro_emb = self.pro_embeddings(pro_seq)
-        y_emb = y_seq.unsqueeze(-1)  # [batch, seq_len, 1]
-        lstm_input = torch.cat([pro_emb, y_emb], dim=-1)
-        lstm_out, (hn, cn) = self.lstm(lstm_input)
+        batch_size, seq_len = pro_seq.shape
+        # 创建全零的张量
+        zeros_tensor = torch.zeros(batch_size, seq_len, embed_dim)
+        # 在指定维度进行拼接，生成需要填充的张量
+        ones_tensor = torch.ones(batch_size,seq_len, embed_dim)
+        zeros_filled = torch.cat([zeros_tensor, ones_tensor], dim=-1)
+        ones_filled = torch.cat([ones_tensor, zeros_tensor], dim=-1)
+        # 根据 y_seq 创建索引张量
+        y_indices = y_seq == 1
+        # 使用索引张量填充对应位置
+        pro_emb = zeros_filled.clone()
+        pro_emb[y_indices] = torch.cat([torch.ones(embed_dim), torch.zeros(embed_dim)], dim=-1)
+        # 获取 pro_embeddings(x) 的嵌入向量
+        pro_embeddings_x = self.pro_embeddings(pro_seq)
+        # 将 pro_embeddings(x) 嵌入到相应的位置
+        pro_emb[:, :, :embed_dim] *= pro_embeddings_x
+        pro_emb[:, :, embed_dim:] *= pro_embeddings_x
+        # pro_emb = self.pro_embeddings(pro_seq)
+        # y_emb = y_seq.unsqueeze(-1)  # [batch, seq_len, 1]
+        # lstm_input = torch.cat([pro_emb, y_emb], dim=-1)
+        # inputs_y_embedding = torch.stack([concat_zero(x) for x in inputs_y])
+        lstm_out, (hn, cn) = self.lstm(pro_emb)
         pred = self.linear(lstm_out)
         return pred
 
