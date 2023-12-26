@@ -6,12 +6,12 @@ import time
 
 
 data_folder = 'assist09'
-pro_skill_coo = sparse.load_npz(os.path.join(data_folder, 'pro_skill_sparse.npz'))
-[pro_num, skill_num] = pro_skill_coo.toarray().shape
+# pro_skill_coo = sparse.load_npz(os.path.join(data_folder, 'pro_skill_sparse.npz'))
+pro_skill = np.load('pro_skill_data.npy')
+[pro_num, skill_num] = pro_skill.shape
 print('problem number %d, skill number %d' % (pro_num, skill_num))
-pro_skill_csc = pro_skill_coo.tocsc()
-pro_skill_csr = pro_skill_coo.tocsr()
-
+pro_skill_csc = sparse.csc_matrix(pro_skill)
+pro_skill_csr = sparse.csr_matrix(pro_skill)
 
 def extract_pro_pro_sim():
     # extract pro-pro similarity sparse matrix

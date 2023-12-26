@@ -33,7 +33,8 @@ test_y, test_skill, test_problem, test_real_len = test_data
 # 嵌入初始化
 # embed_data = np.load(os.path.join(data_folder, 'embedding_200.npz'))
 # _, _, pre_pro_embed = embed_data['pro_repre'], embed_data['skill_repre'], embed_data['pro_final_repre']
-pre_pro_embed = data['problem_embedding']
+pre_pro_embed = np.load(os.path.join(data_folder, 'skill_embedding.npy'))
+pro_num = skill_num
 print('xxxxx',pre_pro_embed.shape, pre_pro_embed.dtype)
 
 
@@ -51,13 +52,6 @@ train_embed = False
 
 import torch
 
-def concat_zero(x):
-    xx = x[:-1]
-    yy = x[-1]
-    zero_tensor = torch.zeros(embed_dim, dtype=torch.float32)
-    o = torch.cat([xx, zero_tensor]) if yy > 0. else torch.cat([zero_tensor, xx])
-    return o
-
 # 模型定义
 class LSTM(nn.Module):
     def __init__(self, pro_num, embed_dim, hidden_dim):
@@ -65,7 +59,7 @@ class LSTM(nn.Module):
         self.pro_embeddings = nn.Embedding(pro_num, embed_dim, padding_idx=0)
         # lstm_input_dim = embed_dim + 1
         self.lstm = nn.LSTM(embed_dim*2, hidden_dim, batch_first=True)
-        self.linear = nn.Linear(hidden_dim, embed_dim)
+        self.linear = nn.Linear(hidden_dim, pro_num)
         self.sigmoid = nn.Sigmoid()
 
         if use_pretrain:
